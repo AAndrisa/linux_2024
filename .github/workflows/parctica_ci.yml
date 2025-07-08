@@ -1,0 +1,36 @@
+name: Build Linux Kernel
+
+on:
+  push:
+    branches:
+      - test_ci
+
+jobs:
+  build-kernel:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install build dependencies
+      run: |
+        sudo apt update
+        sudo apt install make bc u-boot-tools flex bison libssl-dev tar kmod xz-utils gcc-arm-linux-gnueabi -y
+        #ceva
+    - name: Build the dtb file
+      run: |
+        export CROSS_COMPILE=arm-linux-gnueabi-
+        export ARCH=arm
+        make zynq_xcomm_adv7511_defconfig
+        make zynq-coraz7s-ad5592r-s-pmdz.dtb
+      shell: bash
+
+    - name: Export dtb file
+      uses: actions/upload-artifact@v4
+      with:
+        name: dtb-file
+        path: arch/arm/boot/dts/zynq-coraz7s-ad5592r-s-pmdz.dtb
+
+
+
+
