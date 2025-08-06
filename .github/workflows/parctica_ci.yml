@@ -6,13 +6,11 @@ on:
       - test_ci
 
 jobs:
-  build-kernel:
+  build-dtb:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 20
 
     - name: Install build dependencies
       run: |
@@ -32,23 +30,40 @@ jobs:
       with:
         name: dtb-file
         path: arch/arm/boot/dts/zynq-coraz7s-ad5592r-s-pmdz.dtb
-        if-no-files-found: error
+
+  build-kernel:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install build dependencies
+      run: |
+        sudo apt update
+        sudo apt install make bc u-boot-tools flex bison libssl-dev tar kmod xz-utils gcc-arm-linux-gnueabi -y
 
     - name: Build the kernel file
       id: build-kernel
       run: |
-        #export CROSS_COMPILE=arm-linux-gnueabi-
+        export CROSS_COMPILE=arm-linux-gnueabi-
         export ARCH=arm
-        #make zynq_xcomm_adv7511_defconfig
+        make zynq_xcomm_adv7511_defconfig
         make -j6 UIMAGE_LOADADDR=0x8000 uImage
       shell: bash
 
     - name: Export kernel file
-      if: steps.build-kernel.outcome == 'success'
       uses: actions/upload-artifact@v4
       with:
         name: kernel-file
         path: arch/arm/boot/uImage
+
+  check-patch:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 20
 
     - name: Show new commits in the push
       run: |
